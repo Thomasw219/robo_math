@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.linalg import lu
 
 def check_LDU(P, A, L, D, U):
     lhs = P @ A
@@ -13,12 +14,14 @@ def LDU_decomp(A):
     A_prime = np.copy(A)
 
     for i in range(min(m, n)):
+        """
         print("P:")
         print(P)
         print("L:")
         print(L)
         print("A':")
         print(A_prime)
+        """
         # If the i, i element is 0, swap with some later row where the j, i (j > i)
         # element is not 0, this exists because we are given A is invertible and therefore
         # full rank
@@ -60,27 +63,68 @@ def LDU_decomp(A):
 
     return P, L, D, U
 
+def print_LDU(A, P, L, D, U):
+    with np.printoptions(precision=5, suppress=True, threshold=5):
+        print("A:")
+        print(A)
+        print("P:")
+        print(P)
+        print("L:")
+        print(L)
+        print("D:")
+        print(D)
+        print("U:")
+        print(U)
+        print("PA:")
+        print(P @ A)
+        print("LDU:")
+        print(L @ D @ U)
+
+def print_SVD(A, U, S, V_T):
+    with np.printoptions(precision=5, suppress=True, threshold=5):
+        print("A:")
+        print(A)
+        print("U:")
+        print(U)
+        print("S:")
+        print(S)
+        print("V^T:")
+        print(V_T)
+        print("USV^T:")
+        print(U @ S @ V_T)
 
 def test_LDU(A):
-
     P, L, D, U = LDU_decomp(A)
+    print_LDU(A, P, L, D, U)
 
-    print("A:")
-    print(A)
-    print("P:")
-    print(P)
-    print("L:")
-    print(L)
-    print("D:")
-    print(D)
-    print("U:")
-    print(U)
-    print("PA:")
-    print(P @ A)
-    print("LDU:")
-    print(L @ D @ U)
+def test_sp_LDU(A):
+    k = min(A.shape[0], A.shape[1])
+    P, L, U = lu(A)
+    D = np.identity(k)
+    for i in range(k):
+        D[i, i] = U[i, i]
+        if U[i, i] == 0:
+            break
+        else:
+            U[i] = U[i] / U[i, i]
 
-test_LDU(np.array([[1, 1, 0], [1, 1, 2], [4, 2, 3]], dtype=float))
-test_LDU(np.array([[7, 6, 1], [4, 5, 1], [7, 7, 7]], dtype=float))
-test_LDU(np.array([[12, 12, 0, 0], [3, 0, -2, 0], [0, 1, -1, 0], [0, 0, 0, 1], [0, 0, 1, 1]], dtype=float))
-test_LDU(np.array([[7, 6, 4], [0, 3, 3], [7, 3, 1]], dtype=float))
+    print_LDU(A, P, L, D, U)
+
+def test_np_SVD(A):
+    U, s, V_T = np.linalg.svd(A)
+    S = np.zeros_like(A)
+    for i, sig in enumerate(s):
+        S[i, i] = sig
+    print_SVD(A, U, S, V_T)
+
+#test_LDU(np.array([[1, 1, 0], [1, 1, 2], [4, 2, 3]], dtype=float))
+A_1 = np.array([[7, 6, 1], [4, 5, 1], [7, 7, 7]], dtype=float)
+A_2 = np.array([[12, 12, 0, 0], [3, 0, -2, 0], [0, 1, -1, 0], [0, 0, 0, 1], [0, 0, 1, 1]], dtype=float)
+A_3 = np.array([[7, 6, 4], [0, 3, 3], [7, 3, 1]], dtype=float)
+
+#test_LDU(A_1)
+test_np_SVD(A_1)
+#test_sp_LDU(A_2)
+test_np_SVD(A_2)
+#test_sp_LDU(A_3)
+test_np_SVD(A_3)
