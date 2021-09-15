@@ -117,9 +117,21 @@ def test_np_SVD(A):
         S[i, i] = sig
     print_SVD(A, U, S, V_T)
 
+def SVD_solution(A, b):
+    U, s, V_T = np.linalg.svd(A)
+    s = np.array([sig for sig in s if np.abs(sig) > 0.00001])
+    S_inv = np.transpose(np.zeros_like(A))
+    for i, sig in enumerate(s):
+        S_inv[i, i] = 1 / sig
+
+    return np.transpose(V_T) @ S_inv @ np.transpose(U) @ b
+
+
+"""
 #test_LDU(np.array([[1, 1, 0], [1, 1, 2], [4, 2, 3]], dtype=float))
 A_1 = np.array([[7, 6, 1], [4, 5, 1], [7, 7, 7]], dtype=float)
-A_2 = np.array([[12, 12, 0, 0], [3, 0, -2, 0], [0, 1, -1, 0], [0, 0, 0, 1], [0, 0, 1, 1]], dtype=float)
+A_2 = np.array([[12, 12, 0, 0], [3, 0, -2, 0], [0, 1, -1, 0],
+        [0, 0, 0, 1], [0, 0, 1, 1]], dtype=float)
 A_3 = np.array([[7, 6, 4], [0, 3, 3], [7, 3, 1]], dtype=float)
 
 #test_LDU(A_1)
@@ -128,3 +140,20 @@ test_np_SVD(A_1)
 test_np_SVD(A_2)
 #test_sp_LDU(A_3)
 test_np_SVD(A_3)
+"""
+
+A = np.array([[7, 6, 4], [0, 3, 3], [7, 3, 1]], dtype=float)
+b_1 = np.array([[5], [-3], [8]], dtype=float)
+b_2 = np.array([[2], [0], [11]], dtype=float)
+
+x_bar_1 = SVD_solution(A, b_1)
+x_bar_2 = SVD_solution(A, b_2)
+
+v = np.array([[-0.1980], [0.6931], [-0.6931]], dtype=float)
+
+print(x_bar_1)
+print(A @ x_bar_1)
+print(x_bar_2)
+print(A @ x_bar_2)
+
+print(A @ (x_bar_1 + v))
