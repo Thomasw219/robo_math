@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from collections import deque
+
 def compute_coefficients(x, y):
     n = len(x)
     table = np.zeros((n, n))
@@ -88,3 +90,16 @@ print("n values: {}\nErrors: {}".format(n_values, max_errors))
 plt.clf()
 plt.scatter(n_values, np.log(max_errors))
 plt.savefig("./1d_errors_by_n.png")
+
+
+def newtons_method(x_0, function, derivative, conv_error=1e-7, conv_iter=5):
+    past_values = deque()
+    x_n = x_0
+    while len(past_values) < conv_iter or np.max(np.abs(np.array(past_values) - x_n)) > conv_error:
+        x_np1 = x_n - function(x_n) / derivative(x_n)
+        past_values.appendleft(x_np1)
+        if len(past_values) > conv_iter:
+            past_values.pop()
+        x_n = x_np1
+
+    return past_values[0]
