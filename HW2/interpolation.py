@@ -142,33 +142,31 @@ def q3():
 # 5a functions
 def quadratic_interpolation(x, function, conv_error):
     y = function(x)
+    print("x: {}, y (norm): {}".format(x[2], np.abs(y[2])))
     if np.abs(y[2]) < conv_error:
-        return x[2]
-    print(y)
+        return 0
+
     differences_table = compute_table(x, y, dtype='complex')
     a = differences_table[2, 2]
     b = differences_table[2, 1] + a * (x[2] - x[1])
     c = y[2]
-    print(a, b, c)
 
     rooted_determinant = np.sqrt((b**2 - 4 * a * c).astype('complex'))
-    print(rooted_determinant)
     denom1 = b + rooted_determinant
     denom2 = b - rooted_determinant
     if np.abs(denom1) > np.abs(denom2):
         root = 2 * c / denom1
     else:
         root = 2 * c / denom2
-    print(root)
     return root
 
-def deflated_function(roots, polynomial, x):
-    output = polynomial(x)
+def deflated_function_template(roots, polynomial, x):
+    output = polynomial(x).astype('complex')
     for r in roots:
-        output /= (x - r)
+        output /= (x - r).astype('complex')
     return output
 
-def mullers_method(x_m2, x_m1, x_0, num_roots, function, conv_error=1e-10, conv_iter=5, max_iter=10):
+def mullers_method(x_m2, x_m1, x_0, num_roots, function, conv_error=1e-10, conv_iter=5, max_iter=1000):
     roots = []
     iterations = []
     deflated_function = function
@@ -178,9 +176,8 @@ def mullers_method(x_m2, x_m1, x_0, num_roots, function, conv_error=1e-10, conv_
         iteration = 0
         interpolate_points = deque([x_m2, x_m1, x_0])
         while (len(past_values) < conv_iter or np.max(np.abs(np.array(past_values) - interpolate_points[-1])) > conv_error) and iteration < max_iter:
-            print(interpolate_points)
             x = np.array(interpolate_points)
-            x_np1 = x[2] - quadratic_interpolation(x, function, conv_error)
+            x_np1 = x[2] - quadratic_interpolation(x, deflated_function, conv_error)
             past_values.appendleft(x_np1)
             if len(past_values) > conv_iter:
                 past_values.pop()
@@ -189,15 +186,14 @@ def mullers_method(x_m2, x_m1, x_0, num_roots, function, conv_error=1e-10, conv_
             iteration += 1
 
         root = past_values[0]
-        deflated_function = partial(deflated_function, roots, function)
         roots.append(root)
+        deflated_function = partial(deflated_function_template, roots, function)
         iterations.append(iteration)
 
     return roots, iterations
 
 def polynomial_function(x):
-    return np.power(x, 2)
-#    return np.power(x, 4) + x + 1
+    return np.power(x, 4) + x + 1
 
 def q5():
     roots, iterations = mullers_method(1, 2, 3, 4, polynomial_function)
