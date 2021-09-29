@@ -2,17 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from collections import deque
+from functools import partial
 
 # 1a functions
-def compute_table(x, y):
+def compute_table(x, y, dtype='float'):
     n = len(x)
-    table = np.zeros((n, n))
+    table = np.zeros((n, n), dtype=dtype)
     for i, y_i in enumerate(y):
         table[i, 0] = y_i
 
     for i in range(1, n):
         for j in range(i, n):
             table[j, i] = (table[j - 1][i - 1] - table[j][i - 1]) / (x[j - i] - x[j])
+
+    return table
 
 def compute_coefficients(x, y):
     table = compute_table(x, y)
@@ -137,42 +140,80 @@ def q3():
     print("x_root: {}\nNewton's method iterations: {}".format(x_root, iteration))
 
 # 5a functions
-def quadratic_interpolation(x, function):
-    x = np.array([x_nm2, x_nm1, x_n])
+def quadratic_interpolation(x, function, conv_error):
     y = function(x)
-    differences_table = compute_table(x, y)
+    if np.abs(y[2]) < conv_error:
+        return x[2]
+    print(y)
+    differences_table = compute_table(x, y, dtype='complex')
     a = differences_table[2, 2]
-    b = differences_table[2, 1] + a * (x_n - x_nm1)
+    b = differences_table[2, 1] + a * (x[2] - x[1])
     c = y[2]
+    print(a, b, c)
 
-    rooted_determinant = np.sqrt(b**2 - 4 * a * c)
+    rooted_determinant = np.sqrt((b**2 - 4 * a * c).astype('complex'))
+    print(rooted_determinant)
     denom1 = b + rooted_determinant
     denom2 = b - rooted_determinant
     if np.abs(denom1) > np.abs(denom2):
-        root = -2 * c / denom1
-    else
-        root = -2 * c / denom2
+        root = 2 * c / denom1
+    else:
+        root = 2 * c / denom2
+    print(root)
+    return root
 
-    return np.real(root), root
+def deflated_function(roots, polynomial, x):
+    output = polynomial(x)
+    for r in roots:
+        output /= (x - r)
+    return output
 
-def mullers_method(x_m2, x_m1, x_0, function, conv_error=1e-10, conv_iter=5, max_iter=1000):
-    past_values = deque()
-    iteration = 0
-    interpolate_points = deque([x_m2, x_m1, x_0])
-    while (len(past_values) < conv_iter or np.max(np.abs(np.array(past_values) - interpolate_points[-1])) > conv_error) and iteration < max_iter:
-        x_np1, x_np1_complex = quadratic_interpolation(np.array(interpolate_points), function)
-        past_values.appendleft(x_np1)
-        if len(past_values) > conv_iter:
-            past_values.pop()
-        interpolate_points.popleft()
-        interpolate_points.append(x_np1)
-        iteration += 1
+def mullers_method(x_m2, x_m1, x_0, num_roots, function, conv_error=1e-10, conv_iter=5, max_iter=10):
+    roots = []
+    iterations = []
+    deflated_function = function
+    for i in range(num_roots):
+        print("Root: {}".format(i + 1))
+        past_values = deque()
+        iteration = 0
+        interpolate_points = deque([x_m2, x_m1, x_0])
+        while (len(past_values) < conv_iter or np.max(np.abs(np.array(past_values) - interpolate_points[-1])) > conv_error) and iteration < max_iter:
+            print(interpolate_points)
+            x = np.array(interpolate_points)
+            x_np1 = x[2] - quadratic_interpolation(x, function, conv_error)
+            past_values.appendleft(x_np1)
+            if len(past_values) > conv_iter:
+                past_values.pop()
+            interpolate_points.popleft()
+            interpolate_points.append(x_np1)
+            iteration += 1
 
-    return past_values[0], iteration
+        root = past_values[0]
+        deflated_function = partial(deflated_function, roots, function)
+        roots.append(root)
+        iterations.append(iteration)
 
-def polynomial_function(x)
-    return np.power(x, 4) + x + 1
+    return roots, iterations
+
+def polynomial_function(x):
+    return np.power(x, 2)
+#    return np.power(x, 4) + x + 1
+
+def q5():
+    roots, iterations = mullers_method(1, 2, 3, 4, polynomial_function)
+    print("Roots: {}\nIterations: {}".format(roots, iterations))
+
+# 6 computations
+def q6():
+    Q = np.array([[1, -2, 1, -2, 0], [0, 1, -2, 1, -2], [1, 1, -6, 0, 0], [0, 1, 1, -6, 0], [0, 0, 1, 1, -6]])
+    print("Det A: {}".format(np.linalg.det(Q)))
+    A = np.delete(Q, 0, axis=0)
+    A_1 = np.delete(A, 0, axis=1)
+    A_2 = np.delete(A, 1, axis=1)
+    x = (-1)**3 * np.linalg.det(A_1) / np.linalg.det(A_2)
+    print("x: {}".format(x))
 
 #q1()
 #q3()
 q5()
+#q6()
