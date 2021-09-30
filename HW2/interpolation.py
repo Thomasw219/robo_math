@@ -209,7 +209,68 @@ def q6():
     x = (-1)**3 * np.linalg.det(A_1) / np.linalg.det(A_2)
     print("x: {}".format(x))
 
+# 7 computations
+def resultant_determinant(x):
+    return 16 * np.power(x, 4) + 144 * np.power(x, 3) + 480 * np.power(x, 2) + 692 * x + 359
+
+def q7():
+    roots, iterations = mullers_method(1, 2, 3, 4, resultant_determinant)
+    print("Roots: {}\nIterations: {}".format(roots, iterations))
+
+# 8 functions and computations
+def goes_above(x, y):
+    if np.mean(y) > np.mean(x):
+        return True
+    else:
+        return False
+
+def in_triangle(x, x_0, x_1, x_2):
+    points = [x_0, x_1, x_2]
+    for i in range(3):
+        side_vec = points[(i + 1) % 3] - points[i]
+        point_vec = x - points[i]
+        direction_vec = points[(i + 2) % 3] - points[i]
+        orthogonal_point_vec = point_vec - (np.dot(point_vec, side_vec) / np.dot(side_vec, side_vec)) * side_vec
+        orthogonal_direction_vec = direction_vec - (np.dot(direction_vec, side_vec) / np.dot(side_vec, side_vec)) * side_vec
+        if np.linalg.norm(orthogonal_direction_vec) < 1e-5:
+            print("Colinear points")
+            return False
+        scalar = orthogonal_point_vec[0] / orthogonal_direction_vec[0]
+        if scalar <= 0:
+            return False
+    return True
+
+FILE = "./paths.txt"
+def parse_file():
+    with open(FILE, 'r') as f:
+        lines = f.readlines()
+        paths = np.zeros((len(lines) // 2, 50, 2))
+        for i in range(len(lines) // 2):
+            x_values = [float(s) for s in lines[2 * i].split()]
+            y_values = [float(s) for s in lines[2 * i + 1].split()]
+            for j in range(50):
+                paths[i, j, 0] = x_values[j]
+                paths[i, j, 1] = y_values[j]
+
+    return paths
+
+def q8():
+    u = np.array([2, 2])
+    v = np.array([1.2, 1.1])
+
+    x_1 = np.array([1, 1])
+    x_2 = np.array([2, 1])
+    x_3 = np.array([1, 2])
+
+    print(in_triangle(u, x_1, x_2, x_3))
+    print(in_triangle(v, x_1, x_2, x_3))
+
+    paths = parse_file()
+    print(paths)
+
 #q1()
 #q3()
-q5()
+#q5()
 #q6()
+#q7()
+q8()
