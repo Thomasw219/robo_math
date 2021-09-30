@@ -233,7 +233,6 @@ def in_triangle(x, x_0, x_1, x_2):
         orthogonal_point_vec = point_vec - (np.dot(point_vec, side_vec) / np.dot(side_vec, side_vec)) * side_vec
         orthogonal_direction_vec = direction_vec - (np.dot(direction_vec, side_vec) / np.dot(side_vec, side_vec)) * side_vec
         if np.linalg.norm(orthogonal_direction_vec) < 1e-5:
-            print("Colinear points")
             return False
         index = np.argmax(np.abs(orthogonal_direction_vec))
         scalar = orthogonal_point_vec[index] / orthogonal_direction_vec[index]
@@ -267,7 +266,7 @@ def sort_paths(paths):
     return np.stack(above_paths), np.stack(below_paths)
 
 def angle_between_vectors(u, v):
-    return np.arccos(np.dot(u, v) / (np.linalg.norm(u) * np.linalg.norm(v)))
+    return np.arccos(np.clip(np.dot(u, v) / (np.linalg.norm(u) * np.linalg.norm(v)), -1, 1))
 
 def find_reference_paths(p, above_paths, below_paths):
     if goes_above(p):
@@ -288,27 +287,70 @@ def find_reference_paths(p, above_paths, below_paths):
                     continue
                 return np.stack([paths[i], paths[j], paths[k]])
 
+def find_coefficients(p, ref_paths):
+    x_1 = ref_paths[0, 0]
+    x_2 = ref_paths[1, 0]
+    x_3 = ref_paths[2, 0]
+    A = np.concatenate([np.stack([x_1, x_2, x_3]).transpose(), np.array([1, 1, 1]).reshape((1, 3))])
+    b = np.concatenate([p, np.array([1])]).reshape((3, 1))
+    return (np.linalg.inv(A) @ b).ravel()
+
+def synthesize_path(ref_paths, coefficients):
+    return ref_paths[0] * coefficients[0] + ref_paths[1] * coefficients[1] + ref_paths[2] * coefficients[2]
+
+def draw_ring():
+    circle = plt.Circle((5, 5), 1.5, color='r')
+    fig, ax = plt.subplots()
+    ax.add_patch(circle)
+    plt.ylim(0, 12)
+    plt.xlim(0, 12)
+
+def interpolate_path(path, t, interval=1):
+    lower_idx = np.floor(t / interval).astype(int)
+    upper_idx = min(lower_idx + 1, len(path) - 1)
+    alpha = t % interval
+    return path[upper_idx] * alpha + path[lower_idx] * (1 - alpha)
+
 def q8():
-    u = np.array([2, 2])
-    v = np.array([1.2, 1.1])
-
-    x_1 = np.array([1, 1])
-    x_2 = np.array([2, 1])
-    x_3 = np.array([1, 2])
-
-    print(in_triangle(u, x_1, x_2, x_3))
-    print(in_triangle(v, x_1, x_2, x_3))
-
+    points = [np.array([0.8, 1.8]), np.array([2.2, 1.0]), np.array([2.7, 1.4])]
     paths = parse_file()
+    plt.clf()
+    draw_ring()
+    for path in paths:
+        plt.plot(path[:, 0], path[:, 1], c='g')
     above_paths, below_paths = sort_paths(paths)
 
-    p_1 = np.array([0.8, 1.8])
-    p_2 = np.array([2.2, 1.0])
-    p_3 = np.array([2.7, 1.4])
+    for p in points:
+        ref_paths = find_reference_paths(p, above_paths, below_paths)
+        coefficients = find_coefficients(p, ref_paths)
+        new_path = synthesize_path(ref_paths, coefficients)
+        plt.plot(new_path[:, 0], new_path[:, 1], c='b')
 
-    ref_paths = find_reference_paths(p_1, above_paths, below_paths)
-    print(p_1)
-    print(ref_paths)
+    plt.savefig('synthesized_paths.png')
+
+    for p in points:
+        plt.clf()
+        draw_ring()
+        ref_paths = find_reference_paths(p, above_paths, below_paths)
+        for path in ref_paths:
+            plt.scatter(path[:, 0], path[:, 1], c='g', s=1)
+        coefficients = find_coefficients(p, ref_paths)
+        new_path = synthesize_path(ref_paths, coefficients)
+        plt.scatter(new_path[:, 0], new_path[:, 1], c='b', s=1)
+        plt.savefig("synthesized_from_point_{}_{}.png".format(p[0], p[1]))
+
+    for p in points:
+        plt.clf()
+        draw_ring()
+        ref_paths = find_reference_paths(p, above_paths, below_paths)
+        for path in ref_paths:
+            high_res_path = np.stack([interpolate_path(path, t) for t in np.arange(0, 50, 0.02)])
+            plt.scatter(high_res_path[:, 0], high_res_path[:, 1], c='g', s=1)
+        coefficients = find_coefficients(p, ref_paths)
+        new_path = synthesize_path(ref_paths, coefficients)
+        high_res_path = np.stack([interpolate_path(new_path, t) for t in np.arange(0, 50, 0.02)])
+        plt.scatter(high_res_path[:, 0], high_res_path[:, 1], c='b', s=1)
+        plt.savefig("high_res_synthesized_from_point_{}_{}.png".format(p[0], p[1]))
 
 
 #q1()
