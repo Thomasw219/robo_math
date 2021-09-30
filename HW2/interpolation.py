@@ -266,6 +266,28 @@ def sort_paths(paths):
             below_paths.append(path)
     return np.stack(above_paths), np.stack(below_paths)
 
+def angle_between_vectors(u, v):
+    return np.arccos(np.dot(u, v) / (np.linalg.norm(u) * np.linalg.norm(v)))
+
+def find_reference_paths(p, above_paths, below_paths):
+    if goes_above(p):
+        paths = above_paths
+    else:
+        paths = below_paths
+    n = len(paths)
+    for i in range(n):
+        x_1 = paths[i][0]
+        for j in range(n):
+            x_2 = paths[j][0]
+            theta = angle_between_vectors(x_1 - p, x_2 - p)
+            if j == i or theta >= 5 * np.pi / 6 or theta <= np.pi / 2:
+                continue
+            for k in range(n):
+                x_3 = paths[k][0]
+                if k == i or k == j or not in_triangle(p, x_1, x_2, x_3):
+                    continue
+                return np.stack([paths[i], paths[j], paths[k]])
+
 def q8():
     u = np.array([2, 2])
     v = np.array([1.2, 1.1])
@@ -279,8 +301,15 @@ def q8():
 
     paths = parse_file()
     above_paths, below_paths = sort_paths(paths)
-    print(above_paths.shape)
-    print(below_paths.shape)
+
+    p_1 = np.array([0.8, 1.8])
+    p_2 = np.array([2.2, 1.0])
+    p_3 = np.array([2.7, 1.4])
+
+    ref_paths = find_reference_paths(p_1, above_paths, below_paths)
+    print(p_1)
+    print(ref_paths)
+
 
 #q1()
 #q3()
