@@ -218,8 +218,8 @@ def q7():
     print("Roots: {}\nIterations: {}".format(roots, iterations))
 
 # 8 functions and computations
-def goes_above(x, y):
-    if np.mean(y) > np.mean(x):
+def goes_above(x):
+    if np.mean(x[1]) > np.mean(x[0]):
         return True
     else:
         return False
@@ -235,7 +235,8 @@ def in_triangle(x, x_0, x_1, x_2):
         if np.linalg.norm(orthogonal_direction_vec) < 1e-5:
             print("Colinear points")
             return False
-        scalar = orthogonal_point_vec[0] / orthogonal_direction_vec[0]
+        index = np.argmax(np.abs(orthogonal_direction_vec))
+        scalar = orthogonal_point_vec[index] / orthogonal_direction_vec[index]
         if scalar <= 0:
             return False
     return True
@@ -254,6 +255,17 @@ def parse_file():
 
     return paths
 
+def sort_paths(paths):
+    above_paths = []
+    below_paths = []
+    for path in paths:
+        mean = np.mean(path, axis=0)
+        if goes_above(mean):
+            above_paths.append(path)
+        else:
+            below_paths.append(path)
+    return np.stack(above_paths), np.stack(below_paths)
+
 def q8():
     u = np.array([2, 2])
     v = np.array([1.2, 1.1])
@@ -266,7 +278,9 @@ def q8():
     print(in_triangle(v, x_1, x_2, x_3))
 
     paths = parse_file()
-    print(paths)
+    above_paths, below_paths = sort_paths(paths)
+    print(above_paths.shape)
+    print(below_paths.shape)
 
 #q1()
 #q3()
