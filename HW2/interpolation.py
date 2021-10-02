@@ -19,6 +19,7 @@ def compute_table(x, y, dtype='float'):
 
 def compute_coefficients(x, y):
     table = compute_table(x, y)
+    n = len(x)
     coefficients = np.array([table[i, i] for i in range(n)])
     return coefficients
 
@@ -64,7 +65,7 @@ def q1():
         plt.legend()
         plt.savefig("./1c_n={}.png".format(n))
 
-    print("Actual y value: {}".format(1 / (1 + 36 * 0.006**2)))
+    print("Actual y value: {}".format(1 / (1 + 36 * 0.06**2)))
 
     # 1d computation and graphs
     print("1d")
@@ -358,4 +359,4 @@ def q8():
 #q5()
 #q6()
 #q7()
-q8()
+#q8()
