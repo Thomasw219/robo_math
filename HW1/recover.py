@@ -30,13 +30,15 @@ def recover(P, Q):
     P_centered = P - P_centroid
     Q_centered = Q - Q_centroid
 
-    U, s, V_T = np.linalg.svd(P_centered)
-    s = np.array([sig for sig in s if np.abs(sig) > 0.00001])
-    S_inv = np.transpose(np.zeros_like(P_centered))
-    for i, sig in enumerate(s):
-        S_inv[i, i] = 1 / sig
+    U, _, V_T = np.linalg.svd(P_centered @ Q_centered.T)
 
-    R = Q_centered @ np.transpose(V_T) @ S_inv @ np.transpose(U)
+    S_tilde = np.transpose(np.zeros_like(U))
+
+    for i in range(2):
+        S_tilde[i, i] = 1
+    S_tilde[2, 2] = np.linalg.det(U @ V_T.T)
+
+    R = V_T.T @ S_tilde @ U.T
 
     return R, Q_centroid - P_centroid, P_centroid, Q_centroid
 
