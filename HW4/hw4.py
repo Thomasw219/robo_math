@@ -21,7 +21,7 @@ def adamsbashforth_update(x_n, y_n, h, params):
     f_nm2 = params["f_nm2"]
     f_nm3 = params["f_nm3"]
     print(y_n)
-    print(params)
+    print(f_n, f_nm1, f_nm2, f_nm3)
     print((h / 24) * (55 * f_n - 59 * f_nm1 + 37 * f_nm2 - 9 * f_nm3))
     y_np1 = y_n + (h / 24) * (55 * f_n - 59 * f_nm1 + 37 * f_nm2 - 9 * f_nm3)
     return y_np1
@@ -29,8 +29,6 @@ def adamsbashforth_update(x_n, y_n, h, params):
 def interpolate(x_0, y_0, h, steps, derivative=None, initialization_points=None, update=None):
     x = [x_0]
     y = [y_0]
-    if initialization_points is not None:
-        initialization_points = [derivative(x_0 - (3 - i) * h, initialization_points[i]) for i in range(4)]
     for n in range(steps):
         if initialization_points is None:
             params = {"derivative" : derivative}
@@ -59,7 +57,11 @@ def q1():
     plt.figure()
     euler_x, euler_y = interpolate(x_0, y_0, h, 20, derivative=q1_derivative, update=euler_update)
     rk4_x, rk4_y = interpolate(x_0, y_0, h, 20, derivative=q1_derivative, update=rungekutta4_update)
-    ab_x, ab_y = interpolate(x_0, y_0, h, 20, derivative=q1_derivative, initialization_points=[1.07238052947636, 1.04880884817015, 1.02469507659596, 1], update=adamsbashforth_update)
+    # Given function values at these points
+    initialization_points = [q1_derivative(2.15, 1.07238052947636), q1_derivative(2.10, 1.04880884817015), q1_derivative(2.05, 1.02469507659596), q1_derivative(2.0, 1)]
+    # Actual function values at initialization points
+    #initialization_points = [q1_derivative(2.15, 1.05207427), q1_derivative(2.10, 1.03492411), q1_derivative(2.05, 1.01756854), q1_derivative(2.0, 1)]
+    ab_x, ab_y = interpolate(x_0, y_0, h, 20, derivative=q1_derivative, initialization_points=initialization_points, update=adamsbashforth_update)
     true_x = euler_x
     true_y = np.sqrt(true_x) + 1 - np.sqrt(2)
     plt.plot(euler_x, euler_y, label="Euler solution")
@@ -68,5 +70,11 @@ def q1():
     plt.plot(true_x, true_y, label="True function value")
     plt.legend()
     plt.savefig("./figures/q1.png")
+    print(np.max(np.abs(euler_y - true_y)))
+    print(np.max(np.abs(rk4_y - true_y)))
+    print(np.max(np.abs(ab_y - true_y)))
+    print(np.abs(rk4_y - true_y))
+    print(true_x)
+    print(np.sqrt([2 + 0.05 * i for i in range(4)]) + 1 - np.sqrt(2))
 
 q1()
