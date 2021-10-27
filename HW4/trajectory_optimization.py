@@ -33,23 +33,26 @@ for i in range(1, waypoints):
     traj[0, i] = traj[0, i-1] + dist_x/(waypoints-1)
     traj[1, i] = traj[1, i-1] + dist_y/(waypoints-1)
 
+def savefig(path, name):
+    tt = path.shape[0]
+    path_values = np.zeros((tt, 1))
+    for i in range(tt):
+        path_values[i] = obs_cost[int(np.floor(path[i, 0])), int(np.floor(path[i, 1]))]
+
+    # Plot 2D
+    plt.imshow(obs_cost.T)
+    plt.plot(path[:, 0], path[:, 1], 'ro')
+    plt.savefig("figures/" + name + "_2D.png")
+
+    # Plot 3D
+    fig3d = plt.figure()
+    ax3d = fig3d.add_subplot(111, projection='3d')
+    xx, yy = np.meshgrid(range(N), range(N))
+    ax3d.plot_surface(xx, yy, obs_cost.T, cmap=plt.get_cmap('coolwarm'))
+    ax3d.scatter(path[:, 0], path[:, 1], path_values, s=20, c='r')
+
+    plt.show()
+    plt.savefig("figures/" + name + "_3D.png")
+
 path_init = traj.T
-tt = path_init.shape[0]
-path_init_values = np.zeros((tt, 1))
-for i in range(tt):
-    path_init_values[i] = obs_cost[int(np.floor(path_init[i, 0])), int(np.floor(path_init[i, 1]))]
-
-# Plot 2D
-plt.imshow(obs_cost.T)
-plt.plot(path_init[:, 0], path_init[:, 1], 'ro')
-
-# Plot 3D
-fig3d = plt.figure()
-ax3d = fig3d.add_subplot(111, projection='3d')
-xx, yy = np.meshgrid(range(N), range(N))
-ax3d.plot_surface(xx, yy, obs_cost.T, cmap=plt.get_cmap('coolwarm'))
-ax3d.scatter(path_init[:, 0], path_init[:, 1], path_init_values, s=20, c='r')
-
-plt.show()
-
-path = path_init
+savefig(path_init, "original")
