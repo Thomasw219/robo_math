@@ -20,9 +20,9 @@ def adamsbashforth_update(x_n, y_n, h, params):
     f_nm1 = params["f_nm1"]
     f_nm2 = params["f_nm2"]
     f_nm3 = params["f_nm3"]
-    print(y_n)
-    print(f_n, f_nm1, f_nm2, f_nm3)
-    print((h / 24) * (55 * f_n - 59 * f_nm1 + 37 * f_nm2 - 9 * f_nm3))
+#    print(y_n)
+#    print(f_n, f_nm1, f_nm2, f_nm3)
+#    print((h / 24) * (55 * f_n - 59 * f_nm1 + 37 * f_nm2 - 9 * f_nm3))
     y_np1 = y_n + (h / 24) * (55 * f_n - 59 * f_nm1 + 37 * f_nm2 - 9 * f_nm3)
     return y_np1
 
@@ -42,7 +42,7 @@ def interpolate(x_0, y_0, h, steps, derivative=None, initialization_points=None,
         y_np1 = update(x[-1], y[-1], h, params)
         x.append(x_np1)
         y.append(y_np1)
-        print(x_np1, y_np1)
+#        print(x_np1, y_np1)
         if initialization_points is not None:
             initialization_points.append(derivative(x_np1, y_np1))
     return x, y
@@ -70,11 +70,22 @@ def q1():
     plt.plot(true_x, true_y, label="True function value")
     plt.legend()
     plt.savefig("./figures/q1.png")
-    print(np.max(np.abs(euler_y - true_y)))
-    print(np.max(np.abs(rk4_y - true_y)))
-    print(np.max(np.abs(ab_y - true_y)))
-    print(np.abs(rk4_y - true_y))
-    print(true_x)
-    print(np.sqrt([2 + 0.05 * i for i in range(4)]) + 1 - np.sqrt(2))
+    table = np.stack([true_x, true_y, euler_y, np.abs(euler_y - true_y), rk4_y, np.abs(rk4_y - true_y), ab_y, np.abs(ab_y - true_y)], axis=-1)
+    for k, x in enumerate(table):
+        print("{} & ".format(k), end='')
+        for i, y in enumerate(x):
+            if i == 0:
+                print("{:.2f}".format(y), end='')
+            elif i > 1 and i % 2 == 1:
+                print("{:.4f}".format(y), end='')
+            else:
+                print("{:.2f}".format(y), end='')
+
+            if i < x.shape[0] - 1:
+                print(" & ", end='')
+            else:
+                print(" \\\\")
+
+        print("\\hline")
 
 q1()

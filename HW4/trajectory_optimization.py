@@ -158,12 +158,12 @@ def optimize_c_step(traj, lr=0.1):
 traj = deepcopy(path_init)
 
 i = 0
-while i < 1000:
+while i < 5000:
     i += 1
     traj, grad = optimize_c_step(traj)
     traj = np.clip(traj, 0, 100)
-    if i == 1000:
-        savefig(traj, "1000_c")
-    elif i == 500:
-        savefig(traj, "500_c")
+    if i == 100:
+        savefig(traj, "100_c")
+    elif i == 5000:
+        savefig(traj, "5000_c")
     #print(i)
